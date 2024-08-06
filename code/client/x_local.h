@@ -496,7 +496,6 @@ void X_Main_Event_OnSoundStart(int entityNum, const vec3_t origin, const char *s
 
 void X_Main_OnDeathSound(int target, int attacker);
 
-//qboolean X_Main_Hook_CGame_Cvar_SetSafe(const char *var_name, const char *value);
 void X_Main_Hook_UpdateEntityPosition(int entityNum, const vec3_t origin);
 int X_Main_Hook_FS_GetFileList(const char *path, const char *extension, char *listbuf, int bufsize);
 void X_Main_Hook_AddLoopingSound(int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx);
@@ -532,7 +531,6 @@ void X_Hud_On_CG_PRINT(const char *message);
 void X_CH_Init(void);
 qboolean X_CH_CustomizeCrosshair(float x, float y, float w, float h, qhandle_t shader);
 void X_CH_ChangeCrosshairOnSoundTrigger(const char *soundName);
-//void X_CH_CalculateDistance(const refdef_t *fd);
 
 /*********************************
  *  x_ddamage.c

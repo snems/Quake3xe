@@ -77,9 +77,7 @@ void X_Main_InitXMod(void)
 	Cvar_CheckRange( x_enable, "0", "1", CV_INTEGER );
 	Cvar_SetDescription(x_enable, X_HELP_ENABLE);
 
-	//Cvar_Get ("x_hck_ch_enemy_aim_fix_lg_range", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("x_hck_dmg_draw", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	//Cvar_Get ("x_hck_ps_enemy_hitbox", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("x_hck_team_unfreezing_foe", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 
 	Cmd_AddCommand("x_version", Print_Version);
@@ -372,10 +370,6 @@ static void LoadXModeResources(void)
 	rs->soundKill[2] = S_RegisterSound(X_SOUND_KILL_3, qfalse);
 	rs->soundKill[3] = S_RegisterSound(X_SOUND_KILL_4, qfalse);
 
-	// Hitboxes (disabled)
-	//rs->modelHitbox = re.RegisterModel(X_MODEL_HITBOX_3D);
-	//rs->shaderHitbox = re.RegisterShader(X_SHADER_HITBOX_2D);
-
 	// Pickups
 	rs->shaderPowerups[0] = re.RegisterShader(X_BATTLESUIT_SHADER);
 	rs->shaderPowerups[1] = re.RegisterShader(X_QUAD_SHADER);
@@ -640,7 +634,6 @@ void Hook_RenderScene(const refdef_t *fd)
 	}
 
 	X_DMG_DrawDamage(fd);
-	//X_CH_CalculateDistance(fd);
 
 	if (!X_Misc_IsNoWorldRender(fd) || !X_Hud_HideOnXScore())
 	{

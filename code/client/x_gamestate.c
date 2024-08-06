@@ -757,7 +757,7 @@ static void InterceptEvents(snapshot_t *snapshot)
 		
 		if (event == EV_PLAYER_TELEPORT_IN)
 		{
-			if (clc.clientNum == entity->clientNum & snapshot->ps.pm_time < 60) {
+			if ((clc.clientNum == entity->clientNum) & (snapshot->ps.pm_time < 60)) {
 				char* ondeath = Cvar_Get("x_exec_OnSpawn", "", CVAR_ARCHIVE_ND)->string;
 				Cmd_ExecuteString(ondeath);
 			}

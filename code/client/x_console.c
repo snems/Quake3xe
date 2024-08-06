@@ -72,18 +72,6 @@ void X_Con_Init(void)
 	x_con_context.filters[SPAM_FILTER_TYPE_PRIVATE].filter_variable = X_Main_RegisterXModeCmd("x_con_chat_antispam_private", "0", "0", "1", X_HELP_CON_CHAT_ANTISPAM_PRIVATE,CVAR_ARCHIVE,CV_INTEGER);
 }
 
-/*
-static void X_SprintfGametime(char* dest, int size, const char *template)
-{
-	int seconds = (xmod.gs.timer.current - xmod.gs.timer.start)/1000;
-	int hours = seconds / 360;
-	seconds -= hours * 360;
-	int minutes = seconds / 60;
-	seconds -= minutes * 60;
-	Com_sprintf(dest, size, template, hours, minutes, seconds);
-}
-*/
-
 void X_Con_PrintToChatSection(const char *fmt, ...)
 {
 	va_list argptr;
@@ -101,13 +89,6 @@ void X_Con_PrintToChatSection(const char *fmt, ...)
 	newtime = localtime( &aclock );
 
 	strftime(timestr, sizeof(timestr), "%X", newtime);
-
-	//if ( !strcmp(x_con_chat_date->string, "0") )
-	//	strftime( timestr, sizeof( timestr ), "%X", newtime );
-	//else if ( !strcmp(x_con_chat_date->string, "1") )
-	//	strftime( timestr, sizeof( timestr ), "%b %d %Y %X", newtime );
-	//else
-	//	strftime( timestr, sizeof( timestr ), x_con_chat_date->string, newtime );
 
 	Com_sprintf(timestr, sizeof(timestr), "%s", timestr);
 
@@ -219,12 +200,6 @@ qboolean X_Con_OnChatMessage(const char *text, int client)
 	time( &aclock );
 	newtime = localtime( &aclock );
 	strftime(timestr, sizeof(timestr), "%X", newtime);
-	//if ( !strcmp(x_con_chat_date->string, "0") )
-	//	strftime( timestr, sizeof( timestr ), "%X", newtime );
-	//else if ( !strcmp(x_con_chat_date->string, "1") )
-	//	strftime( timestr, sizeof( timestr ), "%b %d %Y %X", newtime );
-	//else
-	//	strftime( timestr, sizeof( timestr ), x_con_chat_date->string, newtime );
 
 	Com_sprintf(timestr, sizeof(timestr), "%s", timestr);
 

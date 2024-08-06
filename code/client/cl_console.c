@@ -843,92 +843,6 @@ static void Con_DrawNotify(void)
 	}
 }
 
-// tried to make messages appearing smooth
-//static void Con_DrawNotify(void)
-//{
-//	int		x, v;
-//	short* text;
-//	int		i;
-//	int		time;
-//	int		skip;
-//	int		currentColorIndex;
-//	int		colorIndex;
-//	float	fadeInTime = 0.5f; // adjust this value to control the fade-in speed
-//
-//	currentColorIndex = ColorIndex(COLOR_WHITE);
-//	re.SetColor(g_color_table[currentColorIndex]);
-//
-//	int times = X_GetMaxOverlay();
-//
-//	v = 0;
-//	for (i = con.section->current - times + 1; i <= con.section->current; i++)
-//	{
-//		if (i < 0)
-//			continue;
-//		time = con.times[i % times];
-//		if (time == 0)
-//			continue;
-//		time = cls.realtime - time;
-//		if (time >= con_notifytime->value * 1000)
-//			continue;
-//		text = con.section->text + (i % con.totallines) * con.linewidth;
-//
-//		if (cl.snap.ps.pm_type != PM_INTERMISSION && Key_GetCatcher() & (KEYCATCH_UI | KEYCATCH_CGAME)) {
-//			continue;
-//		}
-//
-//		float fadeInProgress = 1.0f;
-//		if (time < fadeInTime * 200) {
-//			fadeInProgress = (float)time / (fadeInTime * 200);
-//		}
-//
-//		for (x = 0; x < con.linewidth; x++) {
-//			if ((text[x] & 0xff) == ' ') {
-//				continue;
-//			}
-//			colorIndex = (text[x] >> 8) & 63;
-//			if (currentColorIndex != colorIndex) {
-//				currentColorIndex = colorIndex;
-//				re.SetColor(g_color_table[colorIndex]);
-//			}
-//			int charX = cl_conXOffset->integer + con.xadjust + (x)*smallchar_width;
-//			charX -= (int)(fadeInProgress * smallchar_width); // adjust x position based on fade-in progress
-//			SCR_DrawSmallChar(charX, v, text[x] & 0xff);
-//
-//		}
-//
-//		v += smallchar_height;
-//	}
-//
-//	re.SetColor(NULL);
-//
-//	if (Key_GetCatcher() & (KEYCATCH_UI | KEYCATCH_CGAME)) {
-//		return;
-//	}
-//
-//	// draw the chat line
-//	if (Key_GetCatcher() & KEYCATCH_MESSAGE)
-//	{
-//		// rescale to virtual 640x480 space
-//		v /= cls.glconfig.vidHeight / 480.0;
-//
-//
-//		if (chat_team)
-//		{
-//			SCR_DrawBigString(SMALLCHAR_WIDTH, v, "say_team:", 1.0f, qfalse);
-//			skip = 10;
-//		}
-//		else
-//		{
-//			SCR_DrawBigString(SMALLCHAR_WIDTH, v, "say:", 1.0f, qfalse);
-//			skip = 5;
-//		}
-//
-//		Field_BigDraw(&chatField, skip * BIGCHAR_WIDTH, v,
-//			SCREEN_WIDTH - (skip + 1) * BIGCHAR_WIDTH, qtrue, qtrue);
-//	}
-//}
-
 /*
 ================
 Con_DrawSolidConsole
@@ -1237,9 +1151,6 @@ static int X_GetMaxOverlay(void) {
 	if (!x_con_overlay_size)
 		return NUM_CON_TIMES;
 	
-	//if (x_con_overlay_size->integer < 1)
-	//	return 1;
-
 	if (x_con_overlay_size->integer > NUM_CON_TIMES)
 		return NUM_CON_TIMES;
 
