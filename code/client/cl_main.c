@@ -3925,7 +3925,7 @@ void CL_Init( void ) {
 
 	cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
 	Cvar_SetDescription( cl_conXOffset, "Console notifications X-offset." );
-	cl_conColor = Cvar_Get( "cl_conColor", "", 0 );
+	cl_conColor = Cvar_Get( "cl_conColor", "20 20 20 200", 0 );
 	Cvar_SetDescription( cl_conColor, "Console background color, set as R G B A values from 0-255, use with \\seta to save in config." );
 
 #ifdef MACOS_X
@@ -3969,7 +3969,7 @@ void CL_Init( void ) {
 	cl_reconnectArgs = Cvar_Get( "cl_reconnectArgs", "", CVAR_ARCHIVE_ND | CVAR_NOTABCOMPLETE );
 
 	// userinfo
-	Cvar_Get ("name", "UnnamedPlayer", CVAR_USERINFO | CVAR_ARCHIVE_ND );
+	Cvar_Get ("name", "^1U^7nnamed^1P^7layer", CVAR_USERINFO | CVAR_ARCHIVE_ND );
 	Cvar_Get ("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("snaps", "40", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("model", "sarge", CVAR_USERINFO | CVAR_ARCHIVE_ND );
@@ -3983,10 +3983,16 @@ void CL_Init( void ) {
 	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_ARCHIVE_ND );
 //	Cvar_Get ("teamtask", "0", CVAR_USERINFO );
 	Cvar_Get ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE_ND );
-	Cvar_Get ("cl_anonymous", "0", CVAR_USERINFO | CVAR_ARCHIVE_ND );
+	Cvar_Get ("cl_anonymous", "0", /*CVAR_USERINFO |*/ CVAR_ARCHIVE_ND );
 
 	Cvar_Get ("password", "", CVAR_USERINFO | CVAR_NORESTART);
 	Cvar_Get ("cg_predictItems", "1", CVAR_USERINFO | CVAR_ARCHIVE );
+
+	// Custom
+	Cvar_Get ("cg_smoothClients", "1", CVAR_USERINFO | CVAR_ARCHIVE );
+	Cvar_Get ("cg_trueLightning", "1", CVAR_ARCHIVE );
+	//
+	Cvar_Get ("rendererCON", "", CVAR_ROM );
 
 
 	// cgame might not be initialized before menu is used

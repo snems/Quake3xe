@@ -13,6 +13,8 @@ static char X_HELP_CON_CHAT_ANTISPAM_PRIVATE[] = "\n ^fx_con_chat_antispam_priva
 
 cvar_t *x_con_chat_section = 0;
 cvar_t *x_con_overlay_size = 0;
+cvar_t *x_con_height = 0;
+cvar_t *x_con_smoothanim = 0;
 
 // ====================
 //   Const vars
@@ -79,10 +81,17 @@ void X_Con_PrintToChatSection(const char *fmt, ...)
 	(void) Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
 	va_end(argptr);
 
-	qtime_t time;
-	Com_RealTime(&time);
-	char timestr[64];
-	Com_sprintf(timestr, sizeof(timestr), "%02d:%02d:%02d", time.tm_hour, time.tm_min, time.tm_sec);
+	struct tm *newtime;
+	time_t aclock;
+	char timestr[32];
+
+	time( &aclock );
+	newtime = localtime( &aclock );
+
+	strftime(timestr, sizeof(timestr), "%X", newtime);
+
+	Com_sprintf(timestr, sizeof(timestr), "%s", timestr);
+
 	X_Misc_MakeStringSymbolic(timestr);
 
 	Com_Printf_Chat("^f%s ^l%s\n", timestr, msg);
@@ -184,12 +193,16 @@ qboolean X_Con_OnChatMessage(const char *text, int client)
 	}
 
 	// Make time tag
+	struct tm *newtime;
+	time_t aclock;
+	char timestr[32];
 
-	qtime_t time;
-	Com_RealTime(&time);
+	time( &aclock );
+	newtime = localtime( &aclock );
+	strftime(timestr, sizeof(timestr), "%X", newtime);
 
-	char timestr[64];
-	Com_sprintf(timestr, sizeof(timestr), "%02d:%02d:%02d", time.tm_hour, time.tm_min, time.tm_sec);
+	Com_sprintf(timestr, sizeof(timestr), "%s", timestr);
+
 	X_Misc_MakeStringSymbolic(timestr);
 
 	// Make scope tag

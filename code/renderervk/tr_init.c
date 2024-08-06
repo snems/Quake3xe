@@ -521,6 +521,8 @@ static void InitOpenGL( void )
 	//		- r_gamma
 	//
 
+	ri.Cvar_Set( "rendererCON", "VULKAN" );
+
 	if ( glConfig.vidWidth == 0 )
 	{
 #ifdef USE_VULKAN
@@ -956,26 +958,53 @@ void RB_TakeScreenshotBMP( int x, int y, int width, int height, const char *file
 }
 
 
+#ifdef _WIN32
+extern char *replace( char *str, char c1, char c2 );
+#else
+char *replace( char *str, char c1, char c2 )
+{
+	int l = strlen(str);
+
+	// loop to traverse in the string
+	for ( int i = 0; i < l; i++ )
+	{
+		// Check for c1 and replace
+		if ( str[i] == c1 )
+			str[i] = c2;
+
+		// Check for c2 and replace
+		else if ( str[i] == c2 )
+			str[i] = c1;
+	}
+	return str;
+}
+#endif
+
+
 /*
 ==================
 R_ScreenshotFilename
 ==================
 */
 static void R_ScreenshotFilename( char *fileName, const char *fileExt ) {
-	qtime_t t;
-	int count;
 
-	count = 0;
-	ri.Com_RealTime( &t );
+	int count = 0;
 
-	Com_sprintf( fileName, MAX_OSPATH, "screenshots/shot-%04d%02d%02d-%02d%02d%02d.%s",
-			1900 + t.tm_year, 1 + t.tm_mon,	t.tm_mday,
-			t.tm_hour, t.tm_min, t.tm_sec, fileExt );
+	struct tm *newtime;
+	time_t aclock;
+	char scrstr[32];
+
+	time( &aclock );
+	newtime = localtime( &aclock );
+	strftime( scrstr, sizeof( scrstr ), "%b-%d-%Y_%X", newtime );
+
+	char *str = scrstr;
+	char c1 = ':', c2 = '.';
+
+	Com_sprintf( fileName, MAX_OSPATH, "screenshots/shot-%s.%s", replace(str, c1, c2), fileExt );
 
 	while (	ri.FS_FileExists( fileName ) && ++count < 1000 ) {
-		Com_sprintf( fileName, MAX_OSPATH, "screenshots/shot-%04d%02d%02d-%02d%02d%02d-%d.%s",
-				1900 + t.tm_year, 1 + t.tm_mon,	t.tm_mday,
-				t.tm_hour, t.tm_min, t.tm_sec, count, fileExt );
+		Com_sprintf( fileName, MAX_OSPATH, "screenshots/shot-%s_%d.%s", replace(str, c1, c2), count, fileExt );
 	}
 }
 
@@ -1549,6 +1578,7 @@ static void R_Register( void )
 	ri.Cvar_SetDescription(r_mapGreyScale, "Desaturate world map textures only, works independently from \\r_greyscale, negative values only desaturate lightmaps.");
 
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", "4", CVAR_ARCHIVE_ND | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_subdivisions, "1", "15", CV_FLOAT );
 	ri.Cvar_SetDescription(r_subdivisions, "Distance to subdivide bezier curved surfaces. Higher values mean less subdivision and less geometric complexity.");
 
 	r_maxpolys = ri.Cvar_Get( "r_maxpolys", XSTRING( MAX_POLYS ), CVAR_LATCH );

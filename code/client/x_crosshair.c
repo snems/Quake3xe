@@ -31,8 +31,6 @@ static cvar_t *x_ch_decor_rotate45 = 0;
 static cvar_t *x_ch_decor_action = 0;
 static cvar_t *x_ch_decor_action_color = 0;
 //
-static cvar_t *x_hck_ch_enemy_aim_fix_lg_range = 0;
-//
 static cvar_t *cg_crosshairSize = 0;
 static cvar_t *cg_drawCrosshair = 0;
 
@@ -57,12 +55,11 @@ static char X_HELP_CH_COLOR[] = "\n ^fx_ch_color <color>^7\n\n"
 								"   Change a crosshair color, 0 switch a crosshair color to default mode (ch_crosshairColor, etc).\n";
 static char X_HELP_CH_ROTATE45[] = "\n ^fx_ch_rotate45^5 0|1^7\n\n"
 								   "   Rotate a crosshair to 45 degrees.\n";
-static char X_HELP_CH_ACTION[] = "\n ^fx_ch_action^5 0|...|4^7\n\n"
+static char X_HELP_CH_ACTION[] = "\n ^fx_ch_action^5 0|...|3^7\n\n"
 								 "   Enable an effect on a crosshair when specific event happens:\n"
 								 "    1 - always visible but pulsates when you hit an enemy\n"
 								 "    2 - isn't visible by default but appears when you hit an enemy\n"
 								 "    3 - changes color on a hit\n"
-								 "    4 - changes color when you aimed at an enemy\n"
 								 "   * use ^fx_ch_action_color^7 to control an effect color\n";
 static char X_HELP_CH_ACTION_COLOR[] = "\n ^fx_ch_action_color^5 <color>^7\n\n"
 									   "   Change a crosshair effect color when an action happens (1-9 or #RRGGBB and #RGB).\n";
@@ -87,8 +84,6 @@ static char X_HELP_CH_DECOR_ACTION[] = "\n ^fx_ch_decor_action^5 0|...|4^7\n\n"
 static char X_HELP_CH_DECOR_ACTION_COLOR[] = "\n ^fx_ch_decor_action_color^5 <color>^7\n\n"
 											 "   Change a decoration effect color when an action happens (1-9 or #RRGGBB and #RGB).\n";
 
-static char X_HELP_HCK_ENEMY_AIM_FIX_LG_RANGE[] = "\n ^fx_hck_ch_enemy_aim_fix_lg_range^5 0|1^7\n\n"
-												  "   Display the crosshair decoration when enemy is on LG hit range (working only with ^fx_ch_action^7 or ^fx_ch_decor_action^7 = 4).\n";
 
 // ====================
 //   Static routines
@@ -98,8 +93,6 @@ static void DrawCrosshairHitIcon(float x, float y, float w, float h);
 static qhandle_t LoadCrosshairWithoutLimit(qhandle_t shader);
 static void ChangeCrosshairOnHit(HitCrosshairDamage damage);
 static void DrawCustomizedCrosshair(float x, float y, float w, float h, qhandle_t shader);
-static void TracePlayerOnAim(const vec3_t origin, float distance, const vec3_t axis);
-static void ValidateAndSetAimedTarget(int client, float distance, const vec3_t source, vec3_t target);
 
 // ====================
 //   Implementation
@@ -134,7 +127,7 @@ void X_CH_Init()
 
 	X_Main_RegisterXCommand(x_ch_rotate45, "0", "0", "1", X_HELP_CH_ROTATE45);
 
-	X_Main_RegisterXCommand(x_ch_action, "4", "0", "4", X_HELP_CH_ACTION);
+	X_Main_RegisterXCommand(x_ch_action, "3", "0", "3", X_HELP_CH_ACTION);
 
 	X_Main_RegisterXCommand(x_ch_action_color, "#C00", 0, 0, X_HELP_CH_ACTION_COLOR);
 
@@ -151,8 +144,6 @@ void X_CH_Init()
 	X_Main_RegisterXCommand(x_ch_decor_action, "0", "0", "4", X_HELP_CH_DECOR_ACTION);
 
 	X_Main_RegisterXCommand(x_ch_decor_action_color, "1", 0, 0, X_HELP_CH_DECOR_ACTION_COLOR);
-
-	X_Main_RegisterHackXCommand(x_hck_ch_enemy_aim_fix_lg_range, "0", "0", "1", X_HELP_HCK_ENEMY_AIM_FIX_LG_RANGE);
 
 	X_Misc_InitCustomColor(x_ch_color, &xmod.ch.front);
 	X_Misc_InitCustomColor(x_ch_decor_color, &xmod.ch.decor);
@@ -275,8 +266,8 @@ static void ChangeCrosshairOnHit(HitCrosshairDamage damage)
 
 static void ScaleCrosshairSize(float *x, float *y, float *w, float *h, int size, float mult)
 {
-	*x = 640 / 2;
-	*y = 480 / 2;
+	*x = 640.0 / 2;
+	*y = 480.0 / 2;
 
 	*w = (size ? size : *w) * mult;
 	*h = (size ? size : *h) * mult;
@@ -305,7 +296,7 @@ static void DrawCrosshairHitIcon(float x, float y, float w, float h)
 	int deltaMs = Sys_Milliseconds() - hc->startMS;
 	if (deltaMs > hc->durationMS / 2)
 	{
-		float dur = hc->durationMS / 2;
+		float dur = hc->durationMS / 2.0;
 		float step = 1.0 / dur;
 
 		float delta = deltaMs - dur;
@@ -341,8 +332,8 @@ static void DrawCrosshairHitIcon(float x, float y, float w, float h)
 
 static void DrawCrosshairPic(int size, float scale, qhandle_t shader)
 {
-	float x = 640 / 2;
-	float y = 480 / 2;
+	float x = 640.0 / 2;
+	float y = 480.0 / 2;
 	float w, h;
 
 	if (x_ch_fix_resolution->integer)
@@ -411,34 +402,6 @@ static float GetPulseOpaqueMultiplier(void)
 	return inc - (delta * step);
 }
 
-static float CalculateCrosshairScale(void)
-{
-	float scale = 1.0f;
-	float chdistance = (xmod.aimed ? xmod.aimedDistance : xmod.ch.distance);
-
-	if (x_ch_auto_scale->integer)
-	{
-		const float distance = 2000;
-		const float startFrom = 200;
-		const float scaleRange = 0.40f;
-
-		if (chdistance > startFrom)
-		{
-			float mult = 1.0f - scaleRange;
-
-			if (chdistance < startFrom + distance)
-			{
-				float d = (chdistance - startFrom);
-				float s = scaleRange / distance;
-				mult = 1.0f - (d * s);
-			}
-
-			scale *= mult;
-		}
-	}
-
-	return scale;
-}
 
 static qboolean IsPulseAction(int action)
 {
@@ -467,11 +430,6 @@ static qboolean IsActionActive(int action)
 	if (!action)
 	{
 		return qfalse;
-	}
-
-	if (action == 4)
-	{
-		return (xmod.aimed && !X_Team_ClientIsInSameTeam(xmod.aimedClient));
 	}
 
 	if (!xmod.ch.hp.startMS)
@@ -563,193 +521,10 @@ static void DrawDecorCrosshair(float scale, float pulse, float pulseOpaque)
 static void DrawCustomizedCrosshair(float x, float y, float w, float h, qhandle_t shader)
 {
 	float pulse = GetPulseMultiplier();
-	float scale = CalculateCrosshairScale();
+	float scale = 1.0f;
 	float opaque = GetPulseOpaqueMultiplier();
 
 	DrawDecorCrosshair(scale, pulse, opaque);
 	DrawMainCrosshair(scale, pulse, opaque, shader);
 }
 
-void X_CH_CalculateDistance(const refdef_t *fd)
-{
-	vec3_t start, end;
-	trace_t trace;
-
-	//Fix: When RDF_NOWORLDMODEL presented a render is a part of hud scene, not a game
-	if (X_Misc_IsNoWorldRender(fd))
-	{
-		return;
-	}
-
-	VectorCopy(fd->vieworg, start);
-	VectorMA(start, 131072, fd->viewaxis[0], end);
-
-	// Make trace over map (doesn't include player entity model)
-	CM_BoxTrace(&trace, start, end, vec3_origin, vec3_origin, 0, CONTENTS_SOLID | CONTENTS_BODY, qfalse);
-	xmod.ch.distance = Distance(start, trace.endpos);
-
-	TracePlayerOnAim(fd->vieworg, xmod.ch.distance, fd->viewaxis[0]);
-}
-
-static void TracePlayerOnAim(const vec3_t origin, float distance, const vec3_t axis)
-{
-	xmod.aimed = qfalse;
-	xmod.aimedClient = 0;
-	xmod.aimedDistance = 0;
-
-	if (x_ch_action->integer != 4 && x_ch_decor_action->integer != 4)
-	{
-		return;
-	}
-
-	for (int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if (xmod.gs.ps[i].active != qtrue)
-		{
-			continue;
-		}
-
-		if (xmod.gs.ps[i].origin[0] == 0 && xmod.gs.ps[i].origin[1] == 0 && xmod.gs.ps[i].origin[2] == 0)
-		{
-			continue;
-		}
-
-		vec3_t hitbox_min = {xmod.gs.ps[i].origin[0] - 15, xmod.gs.ps[i].origin[1] - 15, xmod.gs.ps[i].origin[2] - 17};
-		vec3_t hitbox_max = {xmod.gs.ps[i].origin[0] + 15, xmod.gs.ps[i].origin[1] + 15, xmod.gs.ps[i].origin[2] + 32};
-
-		// Check first does a ray position located in a hitbox (mb possible)
-
-		if (origin[0] >= hitbox_min[0] && origin[0] <= hitbox_max[0] &&
-			origin[1] >= hitbox_min[1] && origin[1] <= hitbox_max[1] &&
-			origin[2] >= hitbox_min[2] && origin[2] <= hitbox_max[2])
-		{
-			ValidateAndSetAimedTarget(i, distance, origin, xmod.gs.ps[i].origin);
-			continue;
-		}
-
-		// Does a ray cross over a hitbox?
-
-		double t_near = DBL_MIN,
-		t_far = DBL_MAX;
-		double t1, t2;
-
-		qboolean completed = qtrue;
-
-		for (int a = 0; a < 3; a++) // go over x, y, z
-		{
-			if (fabs(axis[a]) >= DBL_EPSILON)
-			{
-				t1 = (hitbox_min[a] - origin[a]) / axis[a];
-				t2 = (hitbox_max[a] - origin[a]) / axis[a];
-
-				if (t1 > t2)
-				{
-					double t = t1;
-					t1 = t2;
-					t2 = t;
-				}
-
-				if (t1 > t_near)
-				{
-					t_near = t1;
-				}
-
-				if (t2 < t_far)
-				{
-					t_far = t2;
-				}
-
-				if (t_near > t_far)
-				{
-					completed = qfalse;
-					break;
-				}
-				if (t_far < 0.0)
-				{
-					completed = qfalse;
-					break;
-				}
-			}
-			else
-			{
-				if (origin[a] < hitbox_min[a] || origin[a] > hitbox_max[a])
-				{
-					completed = qfalse;
-					break;
-				}
-			}
-		}
-
-		if (!completed)
-		{
-			continue;
-		}
-
-		if (t_near <= t_far && t_far >= 0)
-		{
-			ValidateAndSetAimedTarget(i, distance, origin, xmod.gs.ps[i].origin);
-			continue;
-		}
-	}
-}
-
-static void ValidateAndSetAimedTarget(int client, float distance, const vec3_t source, vec3_t target)
-{
-	XPlayerState *state = X_GS_GetStateByClientId(client);
-
-	if (!state->visible)
-	{
-		return;
-	}
-
-	// Don't aim to a player with invisibility
-	if (state->powerups & (1 << PW_INVIS))
-	{
-		return;
-	}
-
-	float tdistance = Distance(source, target);
-
-	// Don't aim to a frozen player 
-	if (xmod.gs.freezetag && state->powerups & (1 << PW_BATTLESUIT) && state->entity >= MAX_CLIENTS)
-	{
-		// Fix: a frozen player stay closer on aim
-		if (!xmod.aimedDistance || xmod.aimedDistance >= tdistance)
-		{
-			xmod.aimedClient = client;
-			xmod.aimedDistance = tdistance;
-		}
-		return;
-	}
-
-	// Don't aim over walls
-	if (distance < tdistance)
-	{
-		return;
-	}
-
-	// Don't aim with lightning gun if a range is higher than lg range
-	if (X_Main_IsXModeHackCommandActive(x_hck_ch_enemy_aim_fix_lg_range)
-		&& x_hck_ch_enemy_aim_fix_lg_range->integer
-		&& xmod.snap.ps.weapon == WP_LIGHTNING
-		&& tdistance > LIGHTNING_RANGE + 25)
-	{
-		return;
-	}
-
-	// Don't aim if we already aimed to a player that is near then current one
-	if (xmod.aimedDistance && xmod.aimedDistance < tdistance)
-	{
-		return;
-	}
-
-	// Don't aim to a player in a fog
-	if (CM_PointContents(state->origin, 0) & CONTENTS_FOG)
-	{
-		return;
-	}
-
-	xmod.aimed = qtrue;
-	xmod.aimedClient = client;
-	xmod.aimedDistance = tdistance;
-}
