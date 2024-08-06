@@ -49,34 +49,61 @@ void X_DMG_ParseSnapshotDamage()
 	
 	snapshot_t *snapshot = &xmod.snap;
 	Damage *dmg = &xmod.dmg;
-	int total = snapshot->ps.persistant[PERS_HITS];
-	//int total = snapshot->ps.persistant[PERS_ATTACKEE_ARMOR] & 0xff;
-	//int test = snapshot->ps.persistant[PERS_ATTACKEE_ARMOR] & 0xff;
-	//Com_Printf("test: %d\n", test);
+	static int hits_prev = -1;
+	qboolean isHitsChanged = snapshot->ps.persistant[PERS_HITS] != hits_prev;
+
+	hits_prev = snapshot->ps.persistant[PERS_HITS];
+
+	if (!isHitsChanged) return;
+
 	dmg->type = DmgNone;
 	dmg->printed = qfalse;
 	dmg->damage = 0;
 
-	if (dmg->clientNum != snapshot->ps.clientNum)
+
+	if (snapshot->ps.persistant[PERS_ATTACKEE_ARMOR])
 	{
-		dmg->clientNum = snapshot->ps.clientNum;
+		int damage;
+		damage = (snapshot->ps.persistant[PERS_ATTACKEE_ARMOR] & 0x00ff);
+
+		if (dmg->clientNum != snapshot->ps.clientNum)
+		{
+			dmg->clientNum = snapshot->ps.clientNum;
+			dmg->total = damage;
+			return;
+		}
+
+		dmg->damage = damage;
+		dmg->type = DmgUnknown;
+		dmg->total = damage;
+	}
+	else
+	{
+		int total;
+		total = snapshot->ps.persistant[PERS_HITS];
+
+		if (dmg->clientNum != snapshot->ps.clientNum)
+		{
+			dmg->clientNum = snapshot->ps.clientNum;
+			dmg->total = total;
+			return;
+		}
+
+		if (!total || dmg->total > total)
+		{
+			dmg->total = total;
+			
+		}
+
+		if (dmg->total == total)
+		{
+			return;
+		}
+
+		dmg->damage = total - dmg->total;
+		dmg->type = DmgUnknown;
 		dmg->total = total;
-		return;
 	}
-
-	if (!total || dmg->total > total)
-	{
-		dmg->total = total;
-		
-	}
-
-	if (dmg->total == total)
-	{
-		return;
-	}
-
-	dmg->damage = total - dmg->total;
-	dmg->type = DmgUnknown;
 
 	// Try to find a direct hit target
 	for (int i = 0; i < snapshot->numEntities; i++)
@@ -121,7 +148,6 @@ void X_DMG_ParseSnapshotDamage()
 		}
 	}
 
-	dmg->total = total;
 }
 
 void X_DMG_PushDamageForEntity(refEntity_t *ref)
